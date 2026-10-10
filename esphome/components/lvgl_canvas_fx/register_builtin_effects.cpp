@@ -26,6 +26,7 @@
 #include "fx_lightning.h"
 #include "fx_lava_lamp.h"
 #include "fx_rain.h"
+#include "fx_galaxy.h"
 
 namespace esphome {
 namespace lvgl_canvas_fx {
@@ -100,6 +101,8 @@ void register_builtin_effects() {
   FxRegistry::register_factory("lightning", [] { return std::make_unique<FxLightning>(); });
 
   FxRegistry::register_factory("lava_lamp", [] { return std::make_unique<FxLavaLamp>(); });
+
+  FxRegistry::register_factory("galaxy", [] { return std::make_unique<FxGalaxy>(); });
 
   FxRegistry::register_factory("rain", [] {
     auto fx = std::make_unique<FxRain>();
