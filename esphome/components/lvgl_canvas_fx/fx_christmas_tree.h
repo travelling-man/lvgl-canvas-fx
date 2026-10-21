@@ -17,6 +17,7 @@ class FxChristmasTree : public FxBase {
 
  private:
   // ---- tuning ----
+  static constexpr float TREE_X = 0.25f;     // horizontal position of the tree: 0 = left edge, 0.5 = centre
   static constexpr int BAUBLES = 16;         // number of baubles on the tree
   static constexpr int SNOW_DIV = 50;        // one snowflake per this many pixels
   static constexpr float TWINKLE_HZ = 0.4f;  // average bauble twinkle speed

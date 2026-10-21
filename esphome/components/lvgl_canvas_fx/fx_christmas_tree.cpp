@@ -32,9 +32,11 @@ void FxChristmasTree::on_resize(const Rect &r) {
   if (W_ <= 0 || H_ <= 0)
     return;
 
-  cx_ = W_ / 2;
   top_ = std::max(2, H_ / 8);
   base_ = H_ - 5;
+  // Keep the widest row (plus a pixel of air) on the canvas
+  const int widest = half_width_(base_) + 2;
+  cx_ = std::max(widest, std::min(W_ - 1 - widest, (int) std::lround((float) W_ * TREE_X)));
 
   baubles_.resize(BAUBLES);
   for (size_t i = 0; i < baubles_.size(); ++i) {
