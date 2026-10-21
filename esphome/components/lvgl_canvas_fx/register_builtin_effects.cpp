@@ -32,8 +32,6 @@
 #include "fx_santa.h"
 #include "fx_pumpkin.h"
 #include "fx_snowball_fight.h"
-#include "fx_voxel_landscape.h"
-#include "fx_synthwave.h"
 
 namespace esphome {
 namespace lvgl_canvas_fx {
@@ -120,10 +118,6 @@ void register_builtin_effects() {
   FxRegistry::register_factory("pumpkin", [] { return std::make_unique<FxPumpkin>(); });
 
   FxRegistry::register_factory("snowball_fight", [] { return std::make_unique<FxSnowballFight>(); });
-
-  FxRegistry::register_factory("voxel_landscape", [] { return std::make_unique<FxVoxelLandscape>(); });
-
-  FxRegistry::register_factory("synthwave", [] { return std::make_unique<FxSynthwave>(); });
 
   FxRegistry::register_factory("rain", [] {
     auto fx = std::make_unique<FxRain>();
