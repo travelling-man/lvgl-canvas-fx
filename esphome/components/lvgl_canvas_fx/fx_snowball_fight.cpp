@@ -15,7 +15,7 @@ static constexpr int KID_W = 5, KID_H = 8;
 static const char *const KID[3][KID_H] = {
     {"..HH.", "..HHH", "..FF.", ".CCC.", "CCCCC", ".CCC.", ".P.P.", ".P.P."},  // IDLE
     {".....", ".....", ".....", "..HH.", "..HHH", "..FF.", ".CCCC", ".P.P."},  // CROUCH (forming / ducking)
-    {"..HH.", "..HHH", "..FF.", ".CCCC", "CCCC.", ".CCC.", ".P.P.", ".P.P."},  // THROW (also climbing)
+    {"..HH.", "..HHH", "..FF.", ".CCCC", "CCCC.", ".CCC.", ".P.P.", ".P.P."},  // THROW
 };
 // Lying in the snow after a direct hit, 8 x 3, head on the left
 static constexpr int FALL_W = 8, FALL_H = 3;
@@ -40,28 +40,26 @@ void FxSnowballFight::on_resize(const Rect &r) {
   a.mirror = false;
   a.hat[0] = 200; a.hat[1] = 30; a.hat[2] = 30;
   a.coat[0] = 40; a.coat[1] = 90; a.coat[2] = 200;
-  a.has_wall = true;
   a.wall_x0 = (int) a.x + KID_W + 2;
   a.wall_x1 = a.wall_x0 + 5;
+  a.wall_base = ground_;
 
-  // The right kid: on top of the clock, or on the ground just left of it
-  top_x_ = (float) (clock_x0_ + CLOCK_W / 2 - KID_W / 2);
-  bottom_x_ = (float) (clock_x0_ - KID_W - 4);
+  // The right kid stands on top of the clock
   Kid &b = kids_[1];
   b.mirror = true;
   b.hat[0] = 30; b.hat[1] = 140; b.hat[2] = 60;
   b.coat[0] = 220; b.coat[1] = 120; b.coat[2] = 20;
-  b.has_wall = false;
-  b.on_top = true;
-  b.x = top_x_;
+  b.x = (float) (clock_x0_ + CLOCK_W / 2 - KID_W / 2);
   b.feet = (float) (clock_top_ - 1);
+  b.wall_x1 = (int) b.x - 2;
+  b.wall_x0 = b.wall_x1 - 5;
+  b.wall_base = clock_top_;
 
   for (auto &k : kids_) {
     k.pose = IDLE;
     k.fallen = 0;
     k.wall_h = 3;
     k.regrow = 0;
-    k.path.clear();
   }
   for (auto &bl : balls_)
     bl.active = false;
@@ -77,65 +75,7 @@ void FxSnowballFight::on_resize(const Rect &r) {
   phase_t_ = frand(0.5f, 1.5f);
 }
 
-void FxSnowballFight::start_move_() {
-  Kid &k = kids_[1];
-  k.path.clear();
-  const float edge = (float) (clock_x0_ - KID_W);  // hugging the clock's left side
-  const float top_feet = (float) (clock_top_ - 1), ground_feet = (float) (ground_ - 1);
-  if (k.on_top) {
-    // walk to the edge of the clock and jump down
-    k.path.push_back({(float) clock_x0_ + 1.0f, top_feet, WALK_SPEED, false});
-    k.path.push_back({bottom_x_, ground_feet, WALK_SPEED * 1.5f, true});
-  } else {
-    // walk to the clock, climb up its side, step onto the top
-    k.path.push_back({edge, ground_feet, WALK_SPEED, false});
-    k.path.push_back({edge, top_feet, CLIMB_SPEED, false});
-    k.path.push_back({(float) clock_x0_ + 1.0f, top_feet, WALK_SPEED, false});
-    k.path.push_back({top_x_, top_feet, WALK_SPEED, false});
-  }
-  k.on_top = !k.on_top;
-  k.seg_t = 0;
-  k.from_x = k.x;
-  k.from_feet = k.feet;
-  phase_ = MOVE;
-}
-
-bool FxSnowballFight::update_move_(Kid &k, float dt) {
-  if (k.path.empty())
-    return false;
-  const Waypoint &w = k.path.front();
-  const float dist = std::max(std::fabs(w.x - k.from_x), std::fabs(w.feet - k.from_feet));
-  const float dur = std::max(0.15f, dist / w.speed);
-  k.seg_t += dt;
-  const float u = std::min(1.0f, k.seg_t / dur);
-  k.x = k.from_x + (w.x - k.from_x) * u;
-  k.feet = k.from_feet + (w.feet - k.from_feet) * u;
-  if (w.jump)
-    k.feet -= 5.0f * 4.0f * u * (1.0f - u);
-  // Climbing (vertical move) and walking both swing the arms
-  k.pose = (((int) (t_ * 7.0f)) & 1) ? THROW : IDLE;
-  if (w.jump)
-    k.pose = THROW;
-  if (u >= 1.0f) {
-    k.x = w.x;
-    k.feet = w.feet;
-    k.path.erase(k.path.begin());
-    k.seg_t = 0;
-    k.from_x = k.x;
-    k.from_feet = k.feet;
-    if (k.path.empty()) {
-      k.pose = IDLE;
-      return false;
-    }
-  }
-  return true;
-}
-
 void FxSnowballFight::start_round_() {
-  if (kids_[1].fallen <= 0.0f && irand(1, 100) <= MOVE_PERCENT) {
-    start_move_();
-    return;
-  }
   const bool both = irand(1, 100) <= BOTH_PERCENT;
   const int who = irand(0, 1);
   thrower_[0] = both || who == 0;
@@ -170,16 +110,8 @@ void FxSnowballFight::launch_(int from) {
       b.y1 = target.feet - 6.0f;
       break;
     case COVER:
-      if (target.has_wall) {  // the target's snow wall
-        b.x1 = (float) (target.wall_x0 + target.wall_x1) * 0.5f;
-        b.y1 = (float) (ground_ - target.wall_h);
-      } else if (target.on_top) {  // the upper left corner of the clock
-        b.x1 = (float) clock_x0_;
-        b.y1 = (float) clock_top_ - 1.0f;
-      } else {  // falls short into the snow in front of the target
-        b.x1 = target.x - 3.0f;
-        b.y1 = (float) ground_ - 1.0f;
-      }
+      b.x1 = (float) (target.wall_x0 + target.wall_x1) * 0.5f;
+      b.y1 = (float) (target.wall_base - target.wall_h);
       break;
     default:  // MISS: sails past the target and off the canvas
       b.x1 = k.mirror ? -6.0f : (float) W_ + 5.0f;
@@ -209,7 +141,7 @@ void FxSnowballFight::impact_(Ball &b) {
     target.fallen = frand(1.2f, 2.0f);
   } else if (b.outcome == COVER) {
     burst_(b.x1, b.y1, 7);
-    if (target.has_wall && target.wall_h > 1) {
+    if (target.wall_h > 1) {
       target.wall_h--;
       target.regrow = WALL_REGROW_S;
     }
@@ -264,12 +196,6 @@ void FxSnowballFight::step(float dt) {
       if (phase_t_ <= 0.0f)
         start_round_();
       break;
-    case MOVE:
-      if (!update_move_(kids_[1], dt)) {
-        phase_ = PAUSE;
-        phase_t_ = frand(0.4f, 1.0f);
-      }
-      break;
     case MAKE:
       if (phase_t_ <= 0.0f) {
         for (int i = 0; i < 2; ++i)
@@ -295,7 +221,7 @@ void FxSnowballFight::step(float dt) {
         any = true;
         b.t += dt;
         Kid &target = kids_[1 - b.from];
-        // The target ducks behind its cover when the ball is about to hit it
+        // The target ducks behind its wall when the ball is about to hit it
         if (b.outcome == COVER && target.fallen <= 0.0f && b.t > b.dur * 0.4f && !thrower_[1 - b.from])
           target.pose = CROUCH;
         if (b.t >= b.dur)
@@ -328,7 +254,7 @@ void FxSnowballFight::step(float dt) {
       if (k.fallen <= 0.0f)
         k.pose = IDLE;  // gets back up
     }
-    if (k.has_wall && k.wall_h < 3) {
+    if (k.wall_h < 3) {
       k.regrow -= dt;
       if (k.regrow <= 0.0f) {
         k.wall_h++;
@@ -358,12 +284,11 @@ void FxSnowballFight::step(float dt) {
   for (int x = clock_x0_; x < W_; ++x)
     v.put_px(x, clock_top_, snow_white);
 
-  // Snow wall of the left kid
+  // Snow walls
   for (const auto &k : kids_)
-    if (k.has_wall)
-      for (int x = k.wall_x0; x < k.wall_x1; ++x)
-        for (int h = 0; h < k.wall_h; ++h)
-          v.put_px(x, ground_ - 1 - h, h == k.wall_h - 1 ? snow_white : pack_rgb(150, 155, 180));
+    for (int x = k.wall_x0; x < k.wall_x1; ++x)
+      for (int h = 0; h < k.wall_h; ++h)
+        v.put_px(x, k.wall_base - 1 - h, h == k.wall_h - 1 ? snow_white : pack_rgb(150, 155, 180));
 
   for (const auto &k : kids_)
     draw_kid_(v, k);
