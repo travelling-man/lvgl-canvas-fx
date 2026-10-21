@@ -2,7 +2,9 @@
 
 An ESPHome external component that renders fun, high‑performance visual effects on an **LVGL Canvas**. It’s designed for ESP32‑class devices (ESPHome 2026.4.0+, LVGL 9.5) and works with any LVGL‑backed display (HUB75 matrices, TFTs, etc.).
 
-> **Status:** early but functional. Effects today: `circle`, `fireworks`, `fireplace`, `aurora`, `audio_spectrum`, `plasma`, `breathing`, `clouds`, `sunset`, `starfield`, `snowfall`, `leaves`, `sakura`, `fireflies`, `warp`, `boids`, `ripples`, `matrix`, `sand`, `lightning`, `lava_lamp`, `rain`. Contributions welcome!
+> **About this fork:** This is a fork of [pavlov-net/lvgl-canvas-fx](https://github.com/pavlov-net/lvgl-canvas-fx) by Stuart Parmenter. It adds three effects designed for small LED matrices (tested on a 64×32 HUB75 panel with an Adafruit MatrixPortal S3): `galaxy`, `christmas_tree` and `fairy_lights`. Everything else is unchanged from upstream.
+
+> **Status:** early but functional. Effects today: `circle`, `fireworks`, `fireplace`, `aurora`, `audio_spectrum`, `plasma`, `breathing`, `clouds`, `sunset`, `starfield`, `snowfall`, `leaves`, `sakura`, `fireflies`, `warp`, `boids`, `ripples`, `matrix`, `sand`, `lightning`, `lava_lamp`, `rain`, plus in this fork `galaxy`, `christmas_tree`, `fairy_lights`. Contributions welcome!
 
 ---
 
@@ -26,7 +28,7 @@ substitutions:
   DISPLAY_H: "64"
 
 external_components:
-  - source: github://stuartparmenter/lvgl-canvas-fx@main
+  - source: github://travelling-man/lvgl-canvas-fx@main
     components: [lvgl_canvas_fx]
 
 select:
@@ -56,6 +58,9 @@ select:
       - lightning
       - lava_lamp
       - rain
+      - galaxy
+      - christmas_tree
+      - fairy_lights
     initial_option: fireworks
     set_action:
       - lvgl_canvas_fx.set_effect:
@@ -145,6 +150,11 @@ Under the `lvgl_canvas_fx:` array you can configure:
 | `lightning` | Dark storm sky with rare branching bolts and a decaying flash. |
 | `lava_lamp` | Metaball blobs drifting and merging. |
 | `rain` | Rain on glass: streaks plus clinging droplets that slide and merge. HA-controllable (see below). |
+| `galaxy` | *(fork)* Tilted four-armed spiral galaxy slowly rotating around its bright core, with twinkling stars in the arms. |
+| `christmas_tree` | *(fork)* Tiered tree with independently twinkling baubles, a pulsing star, snowfall and a snowy ground line. |
+| `fairy_lights` | *(fork)* A string of bulbs hanging in loops from the top edge; the glow runs along the string, with light snow behind. |
+
+The fork effects are tuned for small, low‑resolution panels such as 64×32 and adapt to the canvas size. Their look can be tweaked via the constants in the `tuning` block of each header (`fx_galaxy.h`, `fx_christmas_tree.h`, `fx_fairy_lights.h`): rotation speed, number of arms, baubles, bulbs per loop and so on.
 
 ### Services (actions)
 - `lvgl_canvas_fx.set_effect: { id, effect }`
@@ -208,4 +218,4 @@ external_components:
 ```
 
 ## License
-MIT © Stuart Parmenter
+MIT © Stuart Parmenter. The effects added in this fork (`galaxy`, `christmas_tree`, `fairy_lights`) are released under the same MIT license.
