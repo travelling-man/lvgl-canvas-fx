@@ -1,10 +1,10 @@
 // SPDX-License-Identifier: MIT
 //
-// Snowball fight around a clock overlay in the lower right corner.
-// The left kid stands on the ground, the right kid on top of the clock, each
-// behind a small snow wall. Throws hit the cover (the target
-// ducks), score a direct hit (the target falls over for a moment) or miss -
-// all at random.
+// Snowball fight between two kids standing diagonally opposite each other:
+// one in the lower left, one in the upper right (above a clock overlay in the
+// lower right corner), each behind a small snow wall. Throws hit the wall (the
+// target ducks), score a direct hit (the target falls over for a moment) or
+// miss - all at random. No visible ground, the kids stand on thin air.
 
 #pragma once
 #include "fx_base.h"
@@ -21,8 +21,7 @@ class FxSnowballFight : public FxBase {
 
  private:
   // ---- tuning ----
-  static constexpr int CLOCK_W = 25;            // size of the clock overlay in the lower right corner
-  static constexpr int CLOCK_H = 8;
+  static constexpr float UPPER_FEET = 0.34f;    // feet row of the upper right kid, fraction of the height
   static constexpr float PAUSE_MIN_S = 0.6f;    // breather between two throws
   static constexpr float PAUSE_MAX_S = 2.2f;
   static constexpr float FLIGHT_MIN_S = 0.8f;   // flight time of a snowball
@@ -61,9 +60,6 @@ class FxSnowballFight : public FxBase {
   };
 
   int W_{0}, H_{0};
-  int ground_{0};     // row of the white ground line
-  int clock_x0_{0};   // first column of the clock
-  int clock_top_{0};  // first row of the clock
   float t_{0};
   Phase phase_{PAUSE};
   float phase_t_{0};

@@ -30,30 +30,27 @@ void FxSnowballFight::on_resize(const Rect &r) {
   if (W_ <= 0 || H_ <= 0)
     return;
 
-  ground_ = H_ - 1;
-  clock_x0_ = std::max(KID_W * 4, W_ - CLOCK_W);
-  clock_top_ = std::max(KID_H + 4, H_ - CLOCK_H);
 
   Kid &a = kids_[0];
   a.x = 3;
-  a.feet = (float) (ground_ - 1);
+  a.feet = (float) (H_ - 2);  // lower left, one row left for the snow patch
   a.mirror = false;
   a.hat[0] = 200; a.hat[1] = 30; a.hat[2] = 30;
   a.coat[0] = 40; a.coat[1] = 90; a.coat[2] = 200;
   a.wall_x0 = (int) a.x + KID_W + 2;
   a.wall_x1 = a.wall_x0 + 5;
-  a.wall_base = ground_;
+  a.wall_base = H_ - 1;
 
-  // The right kid stands on top of the clock
+  // The right kid stands in the upper right, above the clock
   Kid &b = kids_[1];
   b.mirror = true;
   b.hat[0] = 30; b.hat[1] = 140; b.hat[2] = 60;
   b.coat[0] = 220; b.coat[1] = 120; b.coat[2] = 20;
-  b.x = (float) (clock_x0_ + CLOCK_W / 2 - KID_W / 2);
-  b.feet = (float) (clock_top_ - 1);
+  b.x = (float) (W_ - 4 - KID_W);
+  b.feet = (float) std::max(KID_H, (int) std::lround((float) H_ * UPPER_FEET));
   b.wall_x1 = (int) b.x - 2;
   b.wall_x0 = b.wall_x1 - 5;
-  b.wall_base = clock_top_;
+  b.wall_base = (int) b.feet + 1;
 
   for (auto &k : kids_) {
     k.pose = IDLE;
@@ -266,23 +263,28 @@ void FxSnowballFight::step(float dt) {
   // ---- drawing ----
   v.clear_black();
 
-  // Snowfall, settling on the ground or on the clock
+  // Light snowfall
   for (auto &f : snow_) {
     f.y += f.speed * dt;
-    const int floor = (int) f.x >= clock_x0_ ? clock_top_ - 1 : ground_;
-    if (f.y >= (float) floor) {
+    if (f.y >= (float) H_) {
       f.y = 0.0f;
       f.x = frand(0.0f, (float) W_);
     }
     v.put_px((int) f.x, (int) f.y, pack_rgb(70, 70, 90));
   }
 
-  // Ground: a white line left of the clock, and a snow cap on top of the clock
   const auto snow_white = pack_rgb(200, 205, 225);
-  for (int x = 0; x < clock_x0_; ++x)
-    v.put_px(x, ground_, snow_white);
-  for (int x = clock_x0_; x < W_; ++x)
-    v.put_px(x, clock_top_, snow_white);
+
+  // A faint patch of snow under each kid and its wall, fading out at both ends
+  for (const auto &k : kids_) {
+    const int x0 = std::min(k.wall_x0, (int) k.x) - 3;
+    const int x1 = std::max(k.wall_x1, (int) k.x + KID_W) + 3;
+    for (int x = x0; x < x1; ++x) {
+      const int edge = std::min(x - x0, x1 - 1 - x);  // distance to the nearer end
+      const float a = std::min(1.0f, 0.35f + 0.22f * (float) edge);
+      v.put_px(x, k.wall_base, pack_rgb((uint8_t) (110 * a), (uint8_t) (115 * a), (uint8_t) (135 * a)));
+    }
+  }
 
   // Snow walls
   for (const auto &k : kids_)
