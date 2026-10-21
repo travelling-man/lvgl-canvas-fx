@@ -32,22 +32,29 @@ void FxAurora::build_sin_lut_() {
 }
 
 void FxAurora::build_palette_() {
-  // 256-step gradient: teal -> blue -> purple. Dim intentionally for a "moody"
-  // aurora look — a vivid full-range gradient washes out the effect.
+  // Cyclic 256-step palette: night sky (black) with green aurora curtains,
+  // a mint highlight, a teal fade and a touch of violet at the upper fringe.
+  // Mostly black and fairly bright where it glows, so small LED matrices with
+  // low colour depth show clear bands instead of a dim, muddy wash.
+  struct Stop {
+    uint8_t pos, r, g, b;
+  };
+  static const Stop STOPS[] = {
+      {0, 0, 0, 0},       {60, 0, 0, 0},        {80, 0, 40, 15},  {95, 20, 150, 70},
+      {105, 60, 210, 130}, {118, 10, 100, 70},   {135, 0, 20, 20}, {150, 0, 0, 0},
+      {175, 40, 10, 70},  {190, 10, 3, 25},     {205, 0, 0, 0},   {255, 0, 0, 0},
+  };
+  const int n = (int) (sizeof(STOPS) / sizeof(STOPS[0]));
   for (int i = 0; i < 256; ++i) {
-    float t = i / 255.0f;
-    uint8_t r, g, b;
-    if (t < 0.5f) {
-      float u = t * 2.0f;
-      r = (uint8_t) (0.0f + u * 5.0f);
-      g = (uint8_t) (25.0f - u * 14.0f);
-      b = (uint8_t) (20.0f + u * 12.0f);
-    } else {
-      float u = (t - 0.5f) * 2.0f;
-      r = (uint8_t) (5.0f + u * 17.0f);
-      g = (uint8_t) (11.0f - u * 4.0f);
-      b = (uint8_t) (32.0f - u * 7.0f);
-    }
+    int s1 = 0;
+    while (s1 + 1 < n && STOPS[s1 + 1].pos <= i)
+      ++s1;
+    const int s2 = (s1 + 1 < n) ? s1 + 1 : s1;
+    const int span = (int) STOPS[s2].pos - (int) STOPS[s1].pos;
+    const float t = span > 0 ? (float) (i - STOPS[s1].pos) / (float) span : 0.0f;
+    const uint8_t r = (uint8_t) (STOPS[s1].r + (STOPS[s2].r - STOPS[s1].r) * t);
+    const uint8_t g = (uint8_t) (STOPS[s1].g + (STOPS[s2].g - STOPS[s1].g) * t);
+    const uint8_t b = (uint8_t) (STOPS[s1].b + (STOPS[s2].b - STOPS[s1].b) * t);
 
 #if LV_COLOR_DEPTH == 16
     pal16_[i] = ((uint16_t) (r >> 3) << 11) | ((uint16_t) (g >> 2) << 5) | (b >> 3);

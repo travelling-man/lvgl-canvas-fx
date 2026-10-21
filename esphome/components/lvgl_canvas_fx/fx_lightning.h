@@ -9,8 +9,9 @@
 namespace esphome {
 namespace lvgl_canvas_fx {
 
-// Brooding storm sky: a dark blue-gray gradient with rare branching
-// lightning bolts and a decaying full-canvas flash.
+// Night sky with rare branching lightning bolts. The sky stays black by default
+// (SKY_LEVEL / FLASH_LEVEL = 0) so on LED matrices only the bolt itself lights up;
+// raise them for a storm-gradient sky and a full-canvas flash.
 class FxLightning : public FxBase {
  public:
   void on_resize(const Rect &r) override;
@@ -21,6 +22,8 @@ class FxLightning : public FxBase {
   static constexpr float BOLT_MAX_S = 15.0f;
   static constexpr float BOLT_TTL_S = 0.22f;  // bolt visible time
   static constexpr float FLASH_DECAY = 9.0f;  // /s exponential decay
+  static constexpr float SKY_LEVEL = 0.0f;    // 0 = black sky, 1 = dark blue-gray storm gradient
+  static constexpr float FLASH_LEVEL = 0.0f;  // 0 = no sky flash, 1 = full violet-white flash
 
   struct Pt {
     int16_t x, y;

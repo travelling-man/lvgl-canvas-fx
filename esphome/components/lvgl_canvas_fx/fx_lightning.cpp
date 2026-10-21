@@ -26,9 +26,9 @@ void FxLightning::on_resize(const Rect &r) {
   base_b_.assign((size_t) H_, 0);
   for (int y = 0; y < H_; ++y) {
     const float t = (H_ > 1) ? (float) y / (float) (H_ - 1) : 0.0f;
-    base_r_[y] = (uint8_t) (18.0f - 12.0f * t);
-    base_g_[y] = (uint8_t) (22.0f - 14.0f * t);
-    base_b_[y] = (uint8_t) (38.0f - 22.0f * t);
+    base_r_[y] = (uint8_t) ((18.0f - 12.0f * t) * SKY_LEVEL);
+    base_g_[y] = (uint8_t) ((22.0f - 14.0f * t) * SKY_LEVEL);
+    base_b_[y] = (uint8_t) ((38.0f - 22.0f * t) * SKY_LEVEL);
   }
   bolt_.clear();
   branch_.clear();
@@ -87,7 +87,7 @@ void FxLightning::step(float dt) {
     flash_ = 0;
 
   // Sky rows brightened by the flash (violet-tinged white)
-  const int fl = (int) (flash_ * 255.0f);
+  const int fl = (int) (flash_ * FLASH_LEVEL * 255.0f);
   for (int y = 0; y < v.h; ++y) {
     const uint8_t r = (uint8_t) std::min(255, base_r_[y] + ((fl * 150) >> 8));
     const uint8_t g = (uint8_t) std::min(255, base_g_[y] + ((fl * 140) >> 8));

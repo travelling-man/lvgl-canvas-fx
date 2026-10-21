@@ -30,6 +30,7 @@
 #include "fx_christmas_tree.h"
 #include "fx_fairy_lights.h"
 #include "fx_santa.h"
+#include "fx_pumpkin.h"
 
 namespace esphome {
 namespace lvgl_canvas_fx {
@@ -112,6 +113,8 @@ void register_builtin_effects() {
   FxRegistry::register_factory("fairy_lights", [] { return std::make_unique<FxFairyLights>(); });
 
   FxRegistry::register_factory("santa", [] { return std::make_unique<FxSanta>(); });
+
+  FxRegistry::register_factory("pumpkin", [] { return std::make_unique<FxPumpkin>(); });
 
   FxRegistry::register_factory("rain", [] {
     auto fx = std::make_unique<FxRain>();
